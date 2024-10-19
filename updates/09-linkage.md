@@ -36,7 +36,7 @@ explain the form in which we've implemented this for Xr0.
 (Unless specified otherwise, _linkage_ below refers to _linkage of functions_.)
 
   [Lex]: https://en.wikipedia.org/wiki/Lex_(software)
-  [last iteration]: https://open.substack.com/pub/xr0blog/p/61a?r=38hkcl
+  [last iteration]: /updates/08-tilde
 
 ## Linkage in C
 
@@ -60,6 +60,16 @@ machines were slower than today. C compilers, therefore, technically only
 ever[^ever] compile one file at a time, and a source file together with all the
 headers and other source files included via preprocessor `#include`s is called a
 _translation unit_.
+
+  [^ever]: When you run
+    
+    ```
+    cc a.c b.c
+    ```
+    
+    the compiler actually produces two object files and then links them together,
+    treating the two files as separate translation units. 
+
 
 An identifier's _scope_ is the region of program text within which it is visible.
 There are [four kinds of scopes]: _function_, _file_, _block_ and _function
@@ -97,6 +107,10 @@ govern where the abstracts may or must appear, in prototypes and definitions. As
 always we desire that Xr0 be a kind of "analytic continuation" of C, the organic
 extension of Ritchie's design philosophy.
 
+  [^abstract]: An abstract in Xr0 is the `~[]`-delimited region that appears
+  after a function's signature and captures its semantic effect on the state.
+  See [here](https://xr0.dev/learn#abstracts) for more. 
+
 For the moment, since we're focusing on linkage within a translation unit alone,
 we've implemented linkage according to these rules:
 
@@ -105,6 +119,10 @@ we've implemented linkage according to these rules:
 2. All abstracts that appear for a function must be equivalent[^eq]
 
 3. Function prototypes must have abstracts.
+
+  [^eq]: We're using equality of the string forms as a proxy for semantic
+  equivalence later, which would permit, for example, variation in
+  (abstract-)local variable names. 
 
 Rule (1.) is justified by the [Rationale for C89][rat], which explains that
 
@@ -152,20 +170,3 @@ Stretch goals:
    [[#16](https://todo.sr.ht/~lbnz/xr0/16)].
 
 
-
-  [^ever]: When you run
-
-  ```
-  cc a.c b.c
-  ```
-
-  the compiler actually produces two object files and then links them together,
-  treating the two files as separate translation units. 
-
-  [^abstract]: An abstract in Xr0 is the `~[]`-delimited region that appears
-  after a function's signature and captures its semantic effect on the state.
-  See here for more. 
-
-  [^eq]: We're using equality of the string forms as a proxy for semantic
-  equivalence later, which would permit, for example, variation in
-  (abstract-)local variable names. 
