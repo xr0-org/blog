@@ -1,4 +1,5 @@
 ---
+author: [team]
 authors:
   claude:
     name: Claude Betz

@@ -12,7 +12,7 @@ We managed to get the C code generation working.
 The key change that enabled us to succeed is a modification to our abstract
 syntax. Previously we would write
 
-```
+```C
 void *
 foo() [ .alloc result; ];
 ```
@@ -40,7 +40,7 @@ on for Clang and any other compiler that Xr0 may be relying upon. But alas,
 these standard libraries make use of compiler built-ins that are not
 syntactically valid C, e.g. attribute syntax like
 
-```
+```C
 char *__attribute__((aligned(8))) *f;
 ```
 
@@ -56,7 +56,7 @@ We settled, therefore, after the thoughtful deliberation of many hours (by which
 we mean the vain attempt to implement generation in the above way) on adding a
 disambiguating tilde before the square-brackets for our annotations:
 
-```
+```C
 void *
 foo() ~ [ .alloc result; ];
 ```

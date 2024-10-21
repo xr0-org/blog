@@ -24,7 +24,7 @@ We got the [matrix program] working.
 
 - We've been running into trouble when verifying functions like
 	
-    ```
+    ```C
     struct matrix *
     matrix_create(unsigned int rows, unsigned int cols);
     ```

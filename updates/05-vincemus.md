@@ -27,7 +27,7 @@ able to verify entire functions from "userland" alone.
 Our insight also into the nature of the abstract-programming in Xr0 is growing.
 As an example, suppose we're modelling a `student` type:
 
-```
+```C
 struct student {
 	char *name;
 	int grade;
@@ -49,7 +49,7 @@ student_create(char *name, int grade) [
 We may want to write a function that, say, parses a student from a row in a CSV
 file, using the following helper functions:
 
-```
+```C
 char *
 parse_name(char *row) [ .alloc result; ];
 
@@ -59,7 +59,7 @@ parse_grade(char *row);
 
 The body of the `parse_student` function is straightforward:
 
-```
+```C
 struct student *
 parse_student(char *row)
 {
@@ -71,7 +71,7 @@ parse_student(char *row)
 
 But what do we write in its abstract? If we write
 
-```
+```C
 struct student *
 parse_student(char *row) [
 	.alloc result;
@@ -81,7 +81,7 @@ parse_student(char *row) [
 we're kind of stuck because the allocation in `parse_name` takes place before
 the allocation for the `student *` returned. So we've settled on writing
 
-```
+```C
 struct student *
 parse_student(char *row) [
 	result = student_create(parse_name(row), parse_grade(row));
@@ -94,7 +94,7 @@ intended effect in the state.
 
 Because Xr0 is only focused on memory safety, however, we can also write
 
-```
+```C
 struct student *
 parse_student(char *row) [
 	result = student_create(malloc(1), $);
@@ -103,19 +103,19 @@ parse_student(char *row) [
 
 to express the same thing. This has led us to doubt the felicity of our syntax
 
-```
+```C
 .alloc ptr
 ```
 
 and
 
-```
+```C
 .dealloc ptr
 ```
 
 as well as the `result` keyword. We think that something like
 
-```
+```C
 struct student *
 parse_student(char *row) [
 	return student_create(.alloc(), $);

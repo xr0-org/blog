@@ -8,7 +8,7 @@ author: [team]
 _We're experimenting with the style of our updates, trying to make them more
 engaging. Let us know what you find interesting (or boring!) as we continue._
 
-## tl;dr
+## tl;dr {#tldr}
 
 We implemented the first version of internal linkage of functions, allowing them
 to be forward declared in prototypes. For our next iteration, we will be focused
@@ -44,7 +44,7 @@ Linkage is the way identifiers can be made to transcend particular _scopes_ in
 C. In particular, it's the process by which _function prototypes_ are associated
 to _function definitions_, i.e. how the `a`'s below are tied together:
 
-```
+```C
 a();
 
 b() { a(); }
@@ -63,7 +63,7 @@ _translation unit_.
 
   [^ever]: When you run
     
-    ```
+    ```bash
     cc a.c b.c
     ```
     
@@ -168,5 +168,3 @@ Stretch goals:
 
 2. Write a first-version of the "topological sort" mechanism
    [[#16](https://todo.sr.ht/~lbnz/xr0/16)].
-
-
