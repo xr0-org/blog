@@ -54,11 +54,11 @@ of functions with selection statements in their abstracts.
 
 We will explain this in more detail soon, but for now it’s back to building.
 
-# Next up
+## Next up
 
 Our goal for this week (to 3rd) is getting the new splitting procedure to work
 and establishing whether or not it will help us verify main
-[#25](https://github.com/xr0-org/xr0/issues/25).
+[[#25](https://github.com/xr0-org/xr0/issues/25)].
 
 Stretch goal:
-    - Simplify map and array data structures [#13](https://todo.sr.ht/~lbnz/xr0/13).
+    - Simplify map and array data structures [[#13](https://todo.sr.ht/~lbnz/xr0/13)].

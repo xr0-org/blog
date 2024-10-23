@@ -3,12 +3,14 @@ published: Mar 29, 2024
 author: [team]
 ---
 
-# tl;dr
+# #12: Solved use-after-frees
+
+## tl;dr
 
 We’ve been slacking on the updates, but we’ve extended Xr0’s functionality to
 reject use of uninitialised memory and use-after-free bugs.
 
-# Introduction
+## Introduction
 
 Uninitialised memory access bugs and use-after-free memory bugs both fall under
 the broader classification of undefined memory access bugs. Xr0 protects against
@@ -24,7 +26,7 @@ implementation of
     - Reject cases of uninitialised memory accesses
     - Reject cases of invalid pointer dereferences.
 
-# Pass by pointer in C
+## Pass by pointer in C
 
 Pass by pointer in C refers to a mechanism that allows one to pass a memory
 address as an argument to a function rather than the actual value thereby
@@ -54,7 +56,7 @@ As be seen in the `main` function above, instead of passing the value of `p` to
 of" operator. Within `modify` we are then able to dereference the pointer to
 access or modify the data being pointed at. In this case we assign `1` to it.
 
-## How we implemented this in Xr0
+### How we implemented this in Xr0
 
 There are two parts to this implementation. The first is the implementing the
 ability to define pointers to variables declared in different stack frames, the
@@ -88,7 +90,7 @@ Note how we pass the address of `p` into the `modify` function and set its value
 to `1` , our verification blocks verify that the value of `p` was changed as
 expected.
 
-# Undefined memory access
+## Undefined memory access
 
 Memory accesses occur during the evaluation of expressions in C. This could be
 variable access, pointer dereferencing, array access, structure access to name a
@@ -99,7 +101,7 @@ to a memory location that has not been properly initialised, or that has already
 been freed. A discussion of undefined memory access must be underpinned by a
 understanding of
 
-## Lvalue and Rvalue semantics
+### Lvalue and Rvalue semantics
 
 There are semantically two ways in which memory is accessed; lvalue and rvalue
 cases. In lvalue cases a location in memory is written (assigned) to. In rvalue
@@ -111,7 +113,7 @@ cases its value is read. Xr0 verifies that
   assign a variable that has not been initialised to another variable since it
   has no value.
 
-## Rejecting rvalue access of uninitialised memory
+### Rejecting rvalue access of uninitialised memory
 
 Uninitialised memory bugs occur when a variable is used (as an rvalue) before it
 is initialised with a proper value. In C when you declare a variable it contains
@@ -120,7 +122,7 @@ that value without having explicitly assigning a value to it, you use whatever
 "garbage" value happened to be in that location, which leads to undefined
 behaviour.
 
-### How we implemented this in Xr0
+#### How we implemented this in Xr0
 
 C programs are made up of statements and expressions. Statements are
 instructions that control the flow of the program; for example, branching logic
@@ -169,7 +171,7 @@ undef2()
 $ ERROR: undefined memory access: `i' has no value
 ```
 
-## Rejecting invalid pointer dereferences
+### Rejecting invalid pointer dereferences
 
 Our definitions of rvalue and lvalue semantics work in the cases that the
 variables (pointers) are declared within the scope of the function under
@@ -206,7 +208,7 @@ The assumptions of interest to us currently are; whether a parameter (that is a
 pointer) is lvalue dereference-able, rvalue dereference-able or both, as well as
 whether it is heap allocated.
 
-### How we implemented this in Xr0
+#### How we implemented this in Xr0
 
 From working on leaks, we already had the `.alloc` keyword that specified a
 parameter (pointer) is heap allocated. In order to specify that a parameter is
