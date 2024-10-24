@@ -18,7 +18,7 @@ Xr0 eliminates undefined behaviour by simulating the reasoning process that
 programmers do, albeit without error. In order to do this it has to compute what
 is knowable on each line of code. For example, if it sees
 
-```
+```C
 int i; int *p;
 
 p = &i;

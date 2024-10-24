@@ -32,7 +32,7 @@ Pass by pointer in C refers to a mechanism that allows one to pass a memory
 address as an argument to a function rather than the actual value thereby
 allowing a function to directly manipulate the data stored at that address.
 
-```
+```C
 void
 modify(int *q)
 {
@@ -66,7 +66,7 @@ address and associated frame.
 
 As a result the example above can now be expressed in Xr0 statically.
 
-```
+```C
 void
 modify(int *p) ~ [
     *p = 1;
@@ -142,7 +142,7 @@ Some outputs Xr0 produces in this scenario:
 
 1. Assigning an uninitialised variable.
 
-```
+```C
 void
 undef1()
 {
@@ -158,7 +158,7 @@ $ ERROR: undefined memory access: `x' has no value
 
 2. Passing an uninitialised variable as a parameter to a function
 
-```
+```C
 int *
 undef2()
 {
@@ -178,7 +178,7 @@ variables (pointers) are declared within the scope of the function under
 verification, but things get interesting when we are talking about functions
 that take parameters. Take for example:
 
-```
+```C
 void
 modify(int *i)
 {
@@ -215,7 +215,7 @@ parameter (pointer) is heap allocated. In order to specify that a parameter is
 dereference-able (remember we can pass by reference stack allocated variables
 now) we introduced the `.clump` keyword. To illustrate:
 
-```
+```C
 int
 modify(int *i) ~ [
     setup: .clump i;

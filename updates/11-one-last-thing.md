@@ -20,7 +20,7 @@ given a function’s abstract and body. For example, from
   [^abstract]: An *abstract* is the semantic summary of a function’s behaviour.
   See here for a fuller definition.
 
-```
+```C
 void *
 foo(int x)
 {
@@ -42,7 +42,7 @@ however, we have to account for the possibilities that come from the various
 selection statements in parse’s abstract. This can plainly no longer be
 syntactical only, because at the very least we have to move from the call
 
-```
+```C
 l = parse(file);
 ```
 
