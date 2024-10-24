@@ -1,6 +1,5 @@
 ---
 published: Jun 15, 2024
-author: [team]
 ---
 
 # #17: 1D bounds

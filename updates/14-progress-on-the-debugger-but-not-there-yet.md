@@ -1,6 +1,5 @@
 ---
 published: May 06, 2024
-author: [team]
 ---
 
 # #14: Progress on the debugger but not there yet

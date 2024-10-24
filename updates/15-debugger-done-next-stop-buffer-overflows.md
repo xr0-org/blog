@@ -1,6 +1,5 @@
 ---
 published: Jun 01, 2024
-author: [team]
 ---
 
 # #15: Debugger done. Next stop: buffer overflows

@@ -1,6 +1,5 @@
 ---
 published: Nov 15, 2023
-author: [team]
 ---
 
 # #0: We thought we'd be further by now

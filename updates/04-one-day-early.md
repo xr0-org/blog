@@ -1,6 +1,5 @@
 ---
 published: Dec 15, 2023
-author: [team]
 ---
 
 # #4: One day early

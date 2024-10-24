@@ -1,6 +1,5 @@
 ---
 published: Jun 22, 2024
-author: [team]
 ---
 
 # #18: Multi-dimensional arrays (and bounds)

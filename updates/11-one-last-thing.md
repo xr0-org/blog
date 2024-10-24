@@ -1,6 +1,5 @@
 ---
 published: Jan 27, 2024
-author: [team]
 ---
 
 # #11: One Last thing?

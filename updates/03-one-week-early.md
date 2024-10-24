@@ -1,6 +1,5 @@
 ---
 published: Dec 09, 2023
-author: [team]
 ---
 
 # #3: One week early

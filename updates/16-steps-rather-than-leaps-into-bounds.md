@@ -1,6 +1,5 @@
 ---
 published: Jun 08, 2024
-author: [team]
 ---
 
 # #16: Steps (rather than leaps) into bounds

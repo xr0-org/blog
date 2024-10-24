@@ -1,6 +1,5 @@
 ---
 published: Jan 05, 2024
-author: [team]
 ---
 
 # #7: The end(-to-end) in sight

@@ -1,6 +1,5 @@
 ---
 published: Nov 17, 2023
-author: [team]
 ---
 
 # #1: "Slight" change of plans

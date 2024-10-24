@@ -1,6 +1,5 @@
 ---
 published: Jan 20, 2024
-author: [team]
 ---
 
 # #10: Topological sort and a speedbump

@@ -1,6 +1,5 @@
 ---
 published: Apr 24, 2024
-author: [team]
 ---
 
 # #13: We're making Xr0 into a static debugger

@@ -1,6 +1,5 @@
 ---
 published: Jan 08, 2024
-author: [team]
 ---
 
 # #8: ~

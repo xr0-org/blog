@@ -1,6 +1,5 @@
 ---
 published: Jan 01, 2024
-author: [team]
 ---
 
 # #6: New year

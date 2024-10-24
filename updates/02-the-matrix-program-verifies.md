@@ -1,6 +1,5 @@
 ---
 published: Dec 02, 2023
-author: [team]
 ---
 
 # #2: The matrix program verifies

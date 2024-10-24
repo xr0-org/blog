@@ -1,6 +1,5 @@
 ---
 published: Mar 29, 2024
-author: [team]
 ---
 
 # #12: Solved use-after-frees

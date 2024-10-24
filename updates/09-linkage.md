@@ -1,6 +1,5 @@
 ---
 published: Jan 12, 2024
-author: [team]
 ---
 
 # #9: Linkage

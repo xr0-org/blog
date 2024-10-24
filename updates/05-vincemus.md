@@ -1,6 +1,5 @@
 ---
 published: Dec 22, 2023
-author: [team]
 ---
 
 # #5: Vincemus
