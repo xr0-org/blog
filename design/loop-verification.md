@@ -131,13 +131,11 @@ a failed allocation) is
 ```C
 int i;
 void *p = malloc(10);
-for (i = 0; i != 10; i++) {
+for (i = 0; i < 10; i++) {
         p[i] = malloc(1);
 }
 ```
 
-The reason for using `i != 10` instead of the traditional `i < 10` will become
-clear presently.
 Translating into while(1) form we get
 
 ```C
@@ -145,14 +143,14 @@ int i;
 void *p = malloc(10);
 i = 0;
 while (1) {
-        if (!(i != 10)) break;
+        if (!(i < 10)) break;
         p[i] = malloc(1);
         i++;
 }
 ```
 
 Here the invariant must insist that `p[i]` is well-defined before each
-iteration (if `i != 10`):
+iteration (if `i < 10`):
 
 ```C
 int i = 0;
@@ -160,9 +158,9 @@ void *p = malloc(10);
 i = 0;
 while (1) ~ [
         setup: i = [?];
-        if (i != 10) setup: p = .clump(1)-i;
+        if (i < 10) setup: p = .clump(1)-i;
 ]{
-        if (!(i != 10)) break;
+        if (!(i < 10)) break;
         p[i] = malloc(1);
         i++;
 }
@@ -175,7 +173,7 @@ int i;
 void *p = malloc(10);
 for (i = 0; i != 10; i++) ~ [
         setup: i = [?];
-        if (i != 10) setup: p = .clump(1)-i;
+        if (i < 10) setup: p = .clump(1)-i;
 ]{
         p[i] = malloc(1);
 }
@@ -198,12 +196,12 @@ void *p = malloc(10);
 i = 0;
 while (1) ~ [
         setup: i = [?];
-        if (i != 10) {
+        if (i < 10) {
                 setup: p = .clump(1)-i;
                 p[i] = malloc(1);
         }
 ]{
-        if (!(i != 10)) break;
+        if (!(i < 10)) break;
         p[i] = malloc(1);
         i++;
 }
@@ -227,17 +225,17 @@ void *p = malloc(10);
 i = 0;
 while (1) ~ [
         setup: i = [0?11];
-        if (i != 10) {
+        if (i < 10) {
                 setup: {
                         int j; /* dummy variable */
 
                         p = .clump(i+1);
-                        for (j = 0; j != i; j++) p[j] = malloc(1);
+                        for (j = 0; j < i; j++) p[j] = malloc(1);
                 }
                 p[i] = malloc(1);
         }
 ]{
-        if (!(i != 10)) break;
+        if (!(i < 10)) break;
         p[i] = malloc(1);
         i++;
 }
@@ -248,7 +246,7 @@ Expanding the setup for `p` to `.clump(i+1)` simply makes space for `p[0]`,
 The really interesting line is
 
 ```C
-for (j = 0; j != i; j++) p[j] = malloc(1);
+for (j = 0; j < i; j++) p[j] = malloc(1);
 ```
 
 What is meant by this is that at setup we assume the first `i` assignings have
@@ -268,23 +266,46 @@ int i;
 void *p = malloc(10);
 i = 0;
 while (1) ~ [
+        setup: {
+                int j;
+
+                i = [0?11];
+                p = .clump(10);
+                for (j = 0; j < i; j++) p[j] = malloc(1);
+        }
+        if (i < 10) {
+                p[i] = malloc(1);
+                i++;
+        }
+]{
+        if (!(i < 10)) break ~ [
+                /* `i' is a dummy variable below */
+                for (i = 0; i < 10; i++) p[i] = malloc(1);
+        ];
+        p[i] = malloc(1);
+        i++;
+}
+```
+
+```C
+int i;
+void *p = malloc(1);
+for (i = 0; i < 10; i++) ~ [
         setup: i = [0?11];
-        if (i != 10) {
+        if (i < 10) {
                 setup: {
                         int j;
 
                         p = .clump(i+1);
-                        for (j = 0; j != i; j++) p[j] = malloc(1);
+                        for (j = 0; j < i; j++) p[j] = malloc(1);
                 }
                 p[i] = malloc(1);
         }
+][
+        /* `i' is a dummy variable below */
+        for (i = 0; i < 10; i++) p[i] = malloc(1);
 ]{
-        if (!(i != 10)) break ~ [
-                /* `i' is a dummy variable below */
-                for (i = 0; i != 10; i++) p[i] = malloc(1);
-        ];
         p[i] = malloc(1);
-        i++;
 }
 ```
 
@@ -292,7 +313,7 @@ The net effect is the result of plugging `i = 10`, which follows directly from
 the if-condition, into the invariant
 
 ```C
-for (j = 0; j != i; j++) p[j] = malloc(1);
+for (j = 0; j < i; j++) p[j] = malloc(1);
 ```
 
 (and changing the dummy variable from `j` to `i`).
@@ -311,18 +332,18 @@ p[2] = malloc(1);
 i = 3;
 while (1) ~ [
         setup: i = [0?11];
-        if (i != 10) {
+        if (i < 10) {
                 setup: {
                         int j;
 
                         p = .clump(i+1);
-                        for (j = 0; j != i; j++) p[j] = malloc(1);
+                        for (j = 0; j < i; j++) p[j] = malloc(1);
                 }
                 p[i] = malloc(1);
         }
 ]{
-        if (!(i != 10)) break ~ [
-                for (i = 0; i != 10; i++) p[i] = malloc(1);
+        if (!(i < 10)) break ~ [
+                for (i = 0; i < 10; i++) p[i] = malloc(1);
         ];
         p[i] = malloc(1);
         i++;
@@ -332,14 +353,14 @@ while (1) ~ [
 The net effect annotated above is clearly false, since only
 
 ```C
-for (i = 3; i != 10; i++) p[i] = malloc(1);
+for (i = 3; i < 10; i++) p[i] = malloc(1);
 ```
 
 will be accomplished. But, on the other hand, it is the direct result of
 plugging `i = 10` into the invariant
 
 ```C
-for (j = 0; j != i; j++) p[j] = malloc(1);
+for (j = 0; j < i; j++) p[j] = malloc(1);
 ```
 
 So how would we detect that it is false?
