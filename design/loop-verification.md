@@ -1,11 +1,24 @@
 # Loop verification
 
+## Definition
+
+By _undefined behaviour_ or _UB_ is usually meant anything classified as such in
+the C Standard. In this article we will use the term in a more restricted sense,
+referring to violations of any of the safety semantics that Xr0 is currently
+concerned with, such as reading uninitialised memory, dereferencing of pointers
+not pointing at valid blocks and invalid frees like double frees.
+We also include in this term memory leaks, which are not technically UB
+according to the Standard.
+However, we exclude anything that Xr0 is not yet verifying, like the absence of
+all kind of buffer overflows.
+
+## Overview
+
 The two main questions in connection with a loop (or any other construct) are
 
-1. Does it violate any of the safety semantics we are verifying?
+1. Does it contain any UB?
 
-2. How does its execution (as a net effect) affect the safety properties
-of the state?
+2. What is its net effect on the state?
 
 So we want to verify that the loop itself is safe, and then track its impact of
 the state. As an example of the former, if the loop body calls free on some
@@ -13,19 +26,13 @@ variable, we must be able to show that this variable always has a deallocand
 value at this moment. For the latter, if the loop allocates memory in some
 variable, we need to take account of this side effect.
 
-Loop verification can be distinguished into internal and
-external aspects.
+This verification can be distinguished into internal and external aspects.
 
 ## Internal verification
 
 Basically we want to show that, given the initial conditions, it is impossible
-for any leak or UB[^ub] to occur, and then that the annotated side effects will
+for UB to occur, and then that the annotated side effects will
 occur.
-
-  [^ub]: By _UB_ here we mean the instances of UB that we are currently
-  verifying — use of uninitialised memory, dereferencing of pointers not
-  pointing at valid blocks and invalid frees like double frees.
-
 
 Like in the verification of a function, an integral part of our ability to do
 verification comes down to the spec provided by the user. The spec gives us both
@@ -126,7 +133,7 @@ the loop, but it is critical because in general
 #### Example
 
 A more striking example (in which we ask the reader to ignore the possibility of
-a failed allocation) is
+failed allocations) is
 
 ```C
 int i;
@@ -153,12 +160,11 @@ Here the invariant must insist that `p[i]` is well-defined before each
 iteration (if `i < 10`):
 
 ```C
-int i = 0;
-void *p = malloc(10);
-i = 0;
 while (1) ~ [
-        setup: i = [?];
-        if (i < 10) setup: p = .clump(1)-i;
+        setup: {
+                i = [0?];
+                p = .clump(10);
+        }
 ]{
         if (!(i < 10)) break;
         p[i] = malloc(1);
@@ -166,18 +172,14 @@ while (1) ~ [
 }
 ```
 
-Returning to its original form we would expect the user to right something like
+The restriction `0 ≤ i` is necessary because the break condition only ensures us
+that `i < 10` whenever
 
 ```C
-int i;
-void *p = malloc(10);
-for (i = 0; i != 10; i++) ~ [
-        setup: i = [?];
-        if (i < 10) setup: p = .clump(1)-i;
-]{
-        p[i] = malloc(1);
-}
+p[i] = malloc(1);
 ```
+
+is executed.
 
 ### Effect invariants
 
@@ -191,15 +193,12 @@ above.
 This would be done in the following way:
 
 ```C
-int i;
-void *p = malloc(10);
-i = 0;
 while (1) ~ [
-        setup: i = [?];
-        if (i < 10) {
-                setup: p = .clump(1)-i;
-                p[i] = malloc(1);
+        setup: {
+                i = [0?];
+                p = .clump(10);
         }
+        if (i < 10) p[i] = malloc(1);
 ]{
         if (!(i < 10)) break;
         p[i] = malloc(1);
@@ -220,54 +219,9 @@ In the first place, the invariant needs to capture the progress that previous
 iterations accomplish:
 
 ```C
-int i;
-void *p = malloc(10);
-i = 0;
-while (1) ~ [
-        setup: i = [0?11];
-        if (i < 10) {
-                setup: {
-                        int j; /* dummy variable */
-
-                        p = .clump(i+1);
-                        for (j = 0; j < i; j++) p[j] = malloc(1);
-                }
-                p[i] = malloc(1);
-        }
-]{
-        if (!(i < 10)) break;
-        p[i] = malloc(1);
-        i++;
-}
-```
-
-Expanding the setup for `p` to `.clump(i+1)` simply makes space for `p[0]`,
-`p[1]`, ..., `p[i]`.
-The really interesting line is
-
-```C
-for (j = 0; j < i; j++) p[j] = malloc(1);
-```
-
-What is meant by this is that at setup we assume the first `i` assignings have
-occurred.
-Then
-
-```C
-p[i] = malloc(1)
-```
-
-accomplishes the `i+1`-st one.
-This facilitates our annotating the net effect of the loop, which appears as
-follows:
-
-```C
-int i;
-void *p = malloc(10);
-i = 0;
 while (1) ~ [
         setup: {
-                int j;
+                int j; /* dummy variable in loop below */
 
                 i = [0?11];
                 p = .clump(10);
@@ -287,37 +241,6 @@ while (1) ~ [
 }
 ```
 
-```C
-int i;
-void *p = malloc(1);
-for (i = 0; i < 10; i++) ~ [
-        setup: i = [0?11];
-        if (i < 10) {
-                setup: {
-                        int j;
-
-                        p = .clump(i+1);
-                        for (j = 0; j < i; j++) p[j] = malloc(1);
-                }
-                p[i] = malloc(1);
-        }
-][
-        /* `i' is a dummy variable below */
-        for (i = 0; i < 10; i++) p[i] = malloc(1);
-]{
-        p[i] = malloc(1);
-}
-```
-
-The net effect is the result of plugging `i = 10`, which follows directly from
-the if-condition, into the invariant
-
-```C
-for (j = 0; j < i; j++) p[j] = malloc(1);
-```
-
-(and changing the dummy variable from `j` to `i`).
-
 #### Example: partial action
 
 But there is a problem. What happens when the context prior to the loop
@@ -331,15 +254,16 @@ p[1] = malloc(1);
 p[2] = malloc(1);
 i = 3;
 while (1) ~ [
-        setup: i = [0?11];
-        if (i < 10) {
-                setup: {
-                        int j;
+        setup: {
+                int j;
 
-                        p = .clump(i+1);
-                        for (j = 0; j < i; j++) p[j] = malloc(1);
-                }
+                i = [0?11];
+                p = .clump(10);
+                for (j = 0; j < i; j++) p[j] = malloc(1);
+        }
+        if (i < 10) {
                 p[i] = malloc(1);
+                i++;
         }
 ]{
         if (!(i < 10)) break ~ [
