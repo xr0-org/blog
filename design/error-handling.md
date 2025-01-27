@@ -52,172 +52,103 @@ source remains vanilla C.
 So it appears that the only benefit provably algebraic error handling can bring
 to C is [(1)](#no-1).
 
-## An example
 
-Consider what happens when calling this function:
+## Generalising
 
-```C
-FILE *fopen(const char *filename, const char *mode);
-```
+Preventing sentinels from being treated as regular data is a special case of the
+fundamental communication problem that Xr0 addresses.
+The general situation is there is a safety requirement at one point in the
+codebase whose satisfaction depends upon information visible at another.
+Is this pointer dereferencable? Can we call `free` on this pointer? Can we treat
+this `FILE *` as a stream and pass it to `fgetc`?
+In every case it comes down to rigorous communication from the point where an
+object is defined to the point where it is used.
 
-The trouble is that, ordinarily, a C programmer might forget to handle this
-error, writing code like
+The advantage this error-handling problem may provide is it is a more flexible
+and narrow amount of information that we need to communicate. Verifying memory
+safety requires many things (valid pointer, not freed or referring to a popped
+stack frame, within bounds, and referring to initialised memory — if we're
+reading its referent).
+A more ideal candidate for production ready use may be communicating
+user-supplied assertions.
 
-```C
-FILE *f = fopen("/invalid/path/to/file", "r");
-fgetc(f);
-```
-
-Running this (on my machine) unsurprisingly leads to a segfault. 
-The underlying problem is a breakdown in assumptions.
-`fgetc` requires a stream (i.e. a pointer to a `FILE *` representing an opened
-file).
-On the other hand, although `fopen` usually returns such a stream, 
-the Standard [tells us](https://port70.net/~nsz/c/c89/c89-draft.html#4.9.5.3)
-tells us 
-
-> If the open operation fails, `fopen` returns a null pointer.
-
-Thus `fopen` can return two _types_ of values: a pointer to a stream, or an
-error, but `fgetc` is equipped to handle only the former type.
-If we extend C's type system to express this distinction, we will regard `fopen`
-as returning _either_ of these types, and only permit passing the stream kind to
-`fgetc`.
-
-## Annotating sentinels with `.err`
-
-We propose annotating in the following way:
+For example:
 
 ```C
-FILE *
-fopen(const char *filename, const char *mode) ~ [ if ([!]) return .err(NULL); ];
+#define FOO_INT "foo_int"
+
+axiom int
+foo_make() ~ [ return .tag(FOO_INT, [?]); ];
+
+axiom
+foo_use(int k) ~ [ setup: k = .tag(FOO_INT, [?]); ];
 ```
 
-Thus a caller of `fopen` must consider the branch where the return value is
-`.err(NULL)`.
-If we regard the default or assumed meaning of a prototype that doesn't specify
-readiness to deal with error values, like
+Assuming there are no other axioms involving `FOO_INT`, any function calling
+`foo_use` would then need to supply a value that was originally created by
+`foo_make`. We could add to this either a keyword `.untagged` that restricts the
+presence of a tag, like
 
 ```C
-int
-fgetc(FILE *stream);
+axiom
+bar(int k) ~ [ setup: k = .untag(FOO_INT, [?]); ];
 ```
 
-to disallow for error values, we can catch an error in code like this,
+or, perhaps preferably, we could make it such that tags must always be stated,
+so that the absence of a requirement as in `foo_use` above implies restricting
+the presence thereof.
+
+A similar proposal would be custom types, as it were:
 
 ```C
-FILE *f = fopen("/invalid/path/to/file", "r");
-fgetc(f);
+~ [ .tag .foo_int(int); ] /* defining a `.foo_int' as an integer type */
+
+axiom int
+foo_make() ~ [ return .foo_int([?]); ];
+
+axiom
+foo_use(int k) ~ [ setup: k = .foo_int([?]); ];
 ```
 
-```
-`fgetc' expects a FILE * but `f' may be `.err(NULL)'
-```
+Communicating of tags of this kind through function interfaces is trivial, so
+the only question is how to handle loops.
 
-This can obviously be handled by checking:
+
+## Loops
+
+Our basic aim here is to identify a pattern that doesn't require user-supplied
+invariants for a significant subset of the kinds of loops that programmers
+write. For example, if we're initialising an array of `.foo_int`-tagged
+integers, as in
 
 ```C
-FILE *f = fopen("/invalid/path/to/file", "r");
-if (!f) exit(EXIT_FAILURE);
-fgetc(f);
-```
-
-The `!f` branch corresponds to that in which `.err(NULL)` is returned, so there
-is no issue in calling `fgetc(f)` if it isn't selected.
-
-## A harder example
-
-As usual, the real complexity comes when we consider loops. 
-It often happens that we construct an array of entities, e.g.
-
-```C
-void **
-allocmany(int n)
+int **
+baz(int n)
 {
         int i;
 
-        void **arr = malloc(sizeof(void *)*n);
-        if (!arr) return NULL;
-        for (i = 0; i < n; i++) {
-                arr[i] = malloc(1);
-                /* handle error ? */
-        }
+        int *arr = malloc(sizeof(int *) * n);
+        assert(arr);
+        for (i = 0; i < n; i++)
+                arr[i] = foo_make();
         return arr;
 }
 ```
 
-Assuming `malloc` is annotated similarly to `fgetc`, i.e.
+we should be able to annotate and verify `baz` in a "simple" way, such as
 
 ```C
-void *
-malloc(size_t size) ~ [ if ([!]) return .err(NULL); ];
-```
-
-the difficulty comes in deciding how to handle errors returned by `malloc` _in
-the loop_ in `allocmany`, or how to communicate the necessity of doing so to its
-callers.
-We can see three basic ways of doing this, or rather, two fundamental
-approaches, one sensible, the other ill-advised in most cases, and a spectrum of
-infinitely risky compromises between them:
-
-1. Handle all the errors inside the loop, leaving no burden to the caller
-   (except to handle any errors directly signalled by `allocmany`)
-
-2. Handle all the errors in the caller
-
-3. Handle some of the errors and leave the caller to handle the rest (folly
-   herself).
-
-### 1. Handle errors inside the loop
-
-This is the wisest option (in most cases).
-
-```C
-void **
-allocmany(int n) ~ [ if ([!]) return .err(NULL); ]
-{
+int **
+baz(int n) ~ [
         int i;
 
-        void **arr = malloc(sizeof(void *)*n);
-        if (!arr) return NULL;
-        for (i = 0; i < n; i++) {
-                arr[i] = malloc(1);
-                if (!arr[i]) {
-                        int j;
-
-                        for (j = 0; j < i; j++) free(arr[j]);
-                        free(arr);
-                        return NULL;
-                }
-        }
+        int *arr = malloc(sizeof(int *) * n);
+        assert(arr);
+        for (i = 0; i < n; i++)
+                arr[i] = .foo_int([?]);
         return arr;
-}
+];
 ```
 
-### 2. Handle all the errors in the caller
-
-This option is a lot riskier, because we must pass the obligation of checking
-any element in the array before using it, but its advantage is uniformity: the 
-the caller can regard all the returned values as _either_-type (i.e. either
-`NULL`-error or valid pointer).
-
-```C
-void **
-allocmany(int n) ~ [
-        void **arr = malloc(sizeof(void *)*n);
-        if (!arr) return arr;
-        for (i = 0; i < n; i++) {
-                if ([!]) arr[i] = .err(NULL);
-        }
-        return arr;
-]{
-        int i;
-
-        void **arr = malloc(sizeof(void *)*n);
-        if (!arr) return NULL;
-        for (i = 0; i < n; i++) {
-                arr[i] = malloc(1);
-        }
-        return arr;
-}
-```
+(Obviously, we should be able to use `foo_make` instead of `.foo_int` in the
+annotation above with equivalent effect.)
