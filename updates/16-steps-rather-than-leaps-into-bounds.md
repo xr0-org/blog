@@ -42,7 +42,7 @@ about the size of the buffer and the indices where it is accessed:
 1. [Local-constant size and index](https://github.com/xr0-org/xr0/issues/57).
    This is where the array or buffer under consideration has a size that is
    constantly defined within the function, and the accesses are similarly
-   constantly defined indices:
+   constantly defined indices.
 
 2. [Local-constant size](https://github.com/xr0-org/xr0/issues/58). The size of
    the buffer is fixed as in (1.) but the accessed index is given as a
