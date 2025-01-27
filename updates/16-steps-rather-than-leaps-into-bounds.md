@@ -19,10 +19,11 @@ in a function.
 Whenever a pointer is dereferenced, we must insist that the local context
 establishes, not only (i) that the pointer corresponds to a valid block, but
 that (ii) the operation takes place within the bounds of the corresponding
-block[^block] We have substantially solved (i) in our work on the use-after-free (UAF)
-problem and uninitialised memory, so what remains is (ii), the problem of
-determining, once we are convinced that a pointer corresponds to a particular
-block, that it is actually pointing within the bounds of the block.
+block.[^block]
+We have substantially solved (i) in our work on the use-after-free (UAF) problem
+and uninitialised memory, so what remains is (ii), the problem of determining,
+once we are convinced that a pointer corresponds to a particular block, that it
+is actually pointing within the bounds of the block.
 
   [^block]: We use the term *block* to refer to an *entire* contiguous region of
   memory. The Standard uses the general term *object* to refer to “a region of
