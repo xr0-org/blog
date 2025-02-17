@@ -169,3 +169,44 @@ foo(const unsigned int len)
         free(arr);
 }
 ```
+
+### Algorithm
+
+1. _Derive invariant state._ Taking the state as it is in context (e.g. with
+   `arr` holding a pointer to an allocated region for the first loop) execute
+   the invariant.
+   The state now present will be referred to as the _invariant state_.
+
+2. _Setup_. Verify that the context satisfies the invariant state, using the
+   same techniques as in setup verification for functions.
+
+3. _Execute_ the loop body on the invariant state. Use non-terminating branches
+   for _invariance_ verification, and terminating branches for computing the
+   _net effect_ of the loop:
+
+    - _Invariance_. Verify the final state state in any branch that gets to the
+      end of the loop body for satisfaction of the invariant state, just as in
+      (2).
+
+    - _Net effect_. Whenever a loop-terminating statement (`break`, etc.) is
+      encountered, compute the net effect as the concatenation of
+
+        1. The invariant applied in the local (terminal) state, so that in the
+           example above we have `i >= len` plus the invariant, which would
+           establish
+                 
+            ```C
+            i = len;
+            for (j = 0; j < len; j++)
+                  arr[j] = .malloc(1);
+            ```
+
+            It is assumed (until proven otherwise) that it will be "obvious"
+            what such an invariant net effect will be.
+
+        2. The statements in between the beginning of the loop body and the
+           termination point.
+
+         Apply the net effect to the original state to obtain the post-loop
+         state for that branch.
+
