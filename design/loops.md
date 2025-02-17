@@ -207,24 +207,16 @@ foo(const unsigned int len)
       (2).
 
     - _Net effect_. Whenever a loop-terminating statement (`break`, etc.) is
-      encountered, compute the net effect as the concatenation of
+      encountered, regard the state as representative of the net effect of
+      the loop, since it is the concatenation of the invariant state and the
+      statements between the beginning of the loop body and the termination
+      point. In the first loop above, we should get the following as the net
+      effect:
 
-        1. The invariant applied in the local (terminal) state, so that in the
-           example above we have `i >= len` plus the invariant, which would
-           establish
-                 
-            ```C
-            i = len;
-            for (j = 0; j < len; j++)
-                  arr[j] = .malloc(1);
-            ```
+        ```C
+        i = len;
+        for (j = 0; j < len; j++)
+                arr[j] = .malloc(1);
+        ```
 
-            It is assumed (until proven otherwise) that it will be "obvious"
-            what such an invariant net effect will be.
-
-        2. The statements in between the beginning of the loop body and the
-           termination point.
-
-         Apply the net effect to the original state to obtain the post-loop
-         state for that branch.
-
+        Both statements are just the invariant with `i >= len`.
