@@ -180,8 +180,8 @@ foo(const unsigned int len)
 2. _Setup_. Verify that the context satisfies the invariant state, using the
    same techniques as in setup verification for functions.
 
-3. _Execute_ the loop body on the invariant state. Use non-terminating branches
-   for _invariance_ verification, and terminating branches for computing the
+3. _Execute_ the loop body on the invariant state. Use looping branches
+   for _invariance_ verification and terminating branches for computing the
    _net effect_ of the loop:
 
     - _Invariance_. Verify the final state state in any branch that gets to the
