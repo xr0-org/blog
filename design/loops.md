@@ -137,7 +137,7 @@ foo(const unsigned int len)
 }
 ```
 
-We annotate it in the following way:
+We annotate it in the following way:[^while-1]
 
 ```C
 foo(const unsigned int len)
@@ -169,6 +169,24 @@ foo(const unsigned int len)
         free(arr);
 }
 ```
+
+  [^while-1]: It is important to emphasise that the invariants apply to the
+  while(1) form of the loops. Taking the first loop as an example:
+
+    ```C
+    i = 0;
+    while (1) ~ [
+    	int j;
+    	i = [0?len+1];
+    	for (j = 0; j < i; j++)
+                arr[j] = .malloc(1);
+    ]{
+    	if (!(i < len)) break;
+    	arr[i] = malloc(1);
+    	assert(arr[i]);
+    	i++;
+    }
+    ```
 
 ### Algorithm
 
