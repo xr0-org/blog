@@ -9,7 +9,7 @@ identifying a useful subspace within C that is relatively easy to verify.
 Our commitment to ensuring that all well-defined C is expressible within Xr0
 must not distract us.
 
-Our [Lex parser][parse.x] furnishes the right starting point.
+The [Lex parser][parse.x] furnishes the right starting point.
 The issues involved in communicating the semantics of operations like
 
 ```C
@@ -90,18 +90,17 @@ We call this _while(1) form_.
 For example:
 
 ```C
-int i = 0;
-while (i < 9) {
-        i++;
-}
+for (i = 0; i < 9; i++)
+        arr[i] = f(i);
 ```
 
 is rephrased as
 
 ```C
-int i = 0;
+i = 0;
 while (1) {
         if (!(i < 9)) break;
+        arr[i] = f(i);
         i++;
 }
 ```
@@ -110,7 +109,7 @@ We will regard all other forms of loops as abbreviations for while(1)-form
 loops.
 It emphasises that the invariant is the truly characteristic interface to the
 loop: everything important must be related to it.
-Even the termination condition is simply a part of the loops body that
+Even the termination condition is simply a part of the loop's body that
 communicates with the outside world through the invariant.
 
 ## Example
@@ -195,23 +194,25 @@ foo(const unsigned int len)
    the invariant.
    The state now present will be referred to as the _invariant state_.
 
-2. _Setup_. Verify that the context satisfies the invariant state, using the
-   same techniques as in setup verification for functions.
+2. _Verify setup_. Verify that the context satisfies the invariant state, using
+   the same techniques as in setup verification for functions.
 
-3. _Execute_ the loop body on the invariant state. Use looping branches
-   for _invariance_ verification and terminating branches for computing the
-   _net effect_ of the loop:
+3. _Execute_ the loop body on the invariant state. Use looping execution paths
+   for _invariance_ verification and terminating paths to get the
+   _terminating states_ of the loop:
 
-    - _Invariance_. Verify the final state state in any branch that gets to the
-      end of the loop body for satisfaction of the invariant state, just as in
-      (2).
+    - _Verify invariance_. Verify the final state of any path that gets
+      to the end of the loop body for satisfaction of the invariant state, just
+      as in (2.) above.
+      (This is where `continue` will fit in, in future: any jump to the
+      beginning of the loop body must be from an invariant-satisfying point.)
 
-    - _Net effect_. Whenever a loop-terminating statement (`break`, etc.) is
-      encountered, regard the state as representative of the net effect of
-      the loop, since it is the concatenation of the invariant state and the
-      statements between the beginning of the loop body and the termination
-      point. In the first loop above, we should get the following as the net
-      effect:
+    - _Identify terminating states_. Whenever a loop-terminating statement
+      (`break`, `return`, etc.) is encountered, regard the state as
+      representative of the net effect of the loop upon the original state,
+      since it is the concatenation of the invariant state and the statements
+      between the beginning of the loop body and the termination point. In the
+      first loop above, we should get the following as the net effect:
 
         ```C
         i = len;
